@@ -135,7 +135,7 @@ impl Graph {
 
         let mut best: Option<(u32, u32)> = None;
         let mut best_value: Option<u32> = None;
-        while !available_vertex.is_empty() {
+        while available_vertex.len() > 1 {
             for u in &available_vertex {
                 for v in &available_vertex {
                     if u < v {
