@@ -124,7 +124,9 @@ impl Graph {
         red_union.remove(&u);
         red_union.remove(&v);
 
-        (old_red_degree as u32, red_union.len() as u32)
+        let new_red_degree = symmetric_difference.union(&red_union).count();
+
+        (old_red_degree as u32, new_red_degree as u32)
     }
 
     fn greedy(mut self) -> Sequence {
@@ -133,29 +135,28 @@ impl Graph {
 
         let mut available_vertex: HashSet<u32> = self.black.keys().copied().collect();
 
-        let mut best: Option<(u32, u32)> = None;
-        let mut best_value: Option<u32> = None;
         while available_vertex.len() > 1 {
-            for u in &available_vertex {
-                for v in &available_vertex {
+            let mut best_pair = None;
+            let mut best_red_degree = u32::MAX;
+
+            for &u in &available_vertex {
+                for &v in &available_vertex {
                     if u < v {
-                        let (_, value) = self.count_merge(*u, *v);
-                        if best_value == None || value < best_value.unwrap() {
-                            best = Some((*u, *v));
-                            best_value = Some(value);
+                        let (_, red_degree) = self.count_merge(u, v);
+                        if red_degree < best_red_degree {
+                            best_pair = Some((u, v));
+                            best_red_degree = red_degree;
                         }
                     }
                 }
             }
-            let (u, v) = best.unwrap();
-            let value = best_value.unwrap();
-            self.merge(u, v);
-            contractions.push((u, v));
-            width = width.max(value);
 
-            best = None;
-            best_value = None;
-            available_vertex.remove(&v);
+            if let Some((u, v)) = best_pair {
+                self.merge(u, v);
+                contractions.push((u, v));
+                width = width.max(best_red_degree);
+                available_vertex.remove(&v);
+            }
         }
 
         Sequence {
@@ -176,8 +177,6 @@ fn main() -> std::io::Result<()> {
 
     let sequence = graph.greedy();
     let width = sequence.width;
-
-
 
     println!("c tww: {width}");
     for (u, v) in sequence.contractions {
