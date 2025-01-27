@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    io::{stdin, BufRead, BufReader},
-    num::ParseIntError,
-};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Default)]
 struct Graph {
@@ -11,29 +7,6 @@ struct Graph {
 }
 
 impl Graph {
-    pub fn from_gr<R: BufRead>(reader: &mut R) -> std::io::Result<Self> {
-        let mut graph = Self::new();
-        reader.lines().try_for_each(|line| {
-            line.and_then(|line| {
-                let elements: Vec<_> = line.split(' ').collect();
-                match elements[0] {
-                    "c" | "p" => {}
-                    _ => {
-                        let u = elements[0].parse::<u32>().map_err(|e: ParseIntError| {
-                            std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
-                        })?;
-                        let v = elements[1].parse::<u32>().map_err(|e: ParseIntError| {
-                            std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string())
-                        })?;
-                        graph.add_black_edge(u, v);
-                    }
-                }
-                Ok(())
-            })
-        })?;
-        Ok(graph)
-    }
-
     fn new() -> Self {
         Self {
             red: Default::default(),
@@ -86,6 +59,8 @@ impl Graph {
         symmetric_difference.remove(&v);
 
         let mut red_union: HashSet<u32> = u_red.union(&v_red).copied().collect();
+
+        let mut red_union: HashSet<u32> = u_red.union(&v_red).copied().collect();
         red_union.remove(&u);
         red_union.remove(&v);
 
@@ -127,35 +102,26 @@ impl Graph {
         (old_red_degree as u32, red_union.len() as u32)
     }
 
-    fn greedy(mut self) -> Sequence {
+    fn greedy(mut self, u: u32, v: u32) -> Sequence {
         let mut width = 0;
         let mut contractions = vec![];
 
         let mut available_vertex: HashSet<u32> = self.black.keys().copied().collect();
 
-        let mut best: Option<(u32, u32)> = None;
-        let mut best_value: Option<u32> = None;
+        let best: Option<(u32, u32)> = None;
+        let best_value : Option<u32> = None;
         while !available_vertex.is_empty() {
             for u in &available_vertex {
                 for v in &available_vertex {
                     if u < v {
-                        let (_, value) = self.count_merge(*u, *v);
-                        if best_value == None || value < best_value.unwrap() {
-                            best = Some((*u, *v));
-                            best_value = Some(value);
+                        let value = self.count_merge(*u, *v);
+                        if best_value == None || value.1 < best_value.unwrap() {
+
                         }
+
                     }
                 }
             }
-            let (u, v) = best.unwrap();
-            let value = best_value.unwrap();
-            self.merge(u, v);
-            contractions.push((u, v));
-            width = width.max(value);
-
-            best = None;
-            best_value = None;
-            available_vertex.remove(&v);
         }
 
         Sequence {
@@ -166,23 +132,10 @@ impl Graph {
 }
 
 struct Sequence {
-    contractions: Vec<(u32, u32)>,
+    contractions: Vec<u32>,
     width: u32,
 }
 
-fn main() -> std::io::Result<()> {
-    let mut reader = BufReader::new(stdin());
-    let graph: Graph = Graph::from_gr(&mut reader)?;
-
-    let sequence = graph.greedy();
-    let width = sequence.width;
-
-
-
-    println!("c tww: {width}");
-    for (u, v) in sequence.contractions {
-        println!("{u} {v}");
-    }
-
-    Ok(())
+fn main() {
+    println!("Hello, world!");
 }
